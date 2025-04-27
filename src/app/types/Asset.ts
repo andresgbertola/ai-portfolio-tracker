@@ -13,3 +13,9 @@ export interface Asset
     profitPercentage: number;
 }
 
+export type InternalAsset = {
+    name: string;
+    type: AssetType;
+    amount: number;
+    exchange: string;
+};

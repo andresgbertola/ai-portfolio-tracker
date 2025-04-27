@@ -1,78 +1,10 @@
 import {GetAssetExchangeInfoResponse, mapToAssetExchangeInfo} from "../app/types/external/GetAssetExchangeInfoResponse";
-import {API_LOCAL_BASE_URL} from "../../src/constants/externalApis";
+import {API_LOCAL_BASE_URL,API_BITRUE_LOCAL_BASE_URL} from "../../src/constants/externalApis";
 import {Asset, AssetType} from "../app/types/Asset";
-
-// EXCHANGES
-const FIWIND = 'fiwind';
-const BUENBIT = 'buenbit';
-
-export interface AssetConversion {
-  assetName: string;
-  quantity: number;
-  exchangedQuantity: number;
-  exchangedAssetName: string;
-  unitExchangeValue: number;
-  date: string;
-}
-
-// These are our mock data arrays.
-export const assetConversions: AssetConversion[] = [
-  {
-    assetName: "XRP",
-    quantity: 1250,
-    exchangedQuantity: 2500,
-    exchangedAssetName: "USD",
-    unitExchangeValue: 2,
-    date: "2025-04-10"
-  },
-  {
-    assetName: "XLM",
-    quantity: 4000,
-    exchangedQuantity: 1000,
-    exchangedAssetName: "USD",
-    unitExchangeValue: 0.25,
-    date: "2025-04-09"
-  },
-  {
-    assetName: "SOL",
-    quantity: 4,
-    exchangedQuantity: 500,
-    exchangedAssetName: "USD",
-    unitExchangeValue: 125,
-    date: "2025-03-26"
-  },
-  {
-    assetName: "XRP",
-    quantity: 200,
-    exchangedQuantity: 500,
-    exchangedAssetName: "USD",
-    unitExchangeValue: 2.5,
-    date: "2025-03-26"
-  },
-  {
-    assetName: "ADA",
-    quantity: 500,
-    exchangedQuantity: 600000,
-    exchangedAssetName: "ARS",
-    unitExchangeValue: 1200,
-    date: "2025-03-03"
-  },
-];
-
-type InternalAsset = {
-    name: string;
-    type: AssetType;
-    amount: number;
-    exchange: string;
-};
-
-const mock_assets : InternalAsset[] = [
-  { name: "USD", type: "Fiat", amount: 2500, exchange: "none" },
-  { name: "XRP", type: "Crypto", amount: 0, exchange: FIWIND },
-  { name: "ADA", type: "Crypto", amount: 0, exchange: FIWIND },
-  { name: "SOL", type: "Crypto", amount: 0, exchange: FIWIND },
-  { name: "XLM", type: "Crypto", amount: 0, exchange: BUENBIT }
-];
+import { InternalAsset } from "../app/types/Asset";
+import {EXCHANGES, FIWIND, BUENBIT, BITRUE} from "../constants/exchanges";
+import { mock_assets, assetConversions } from "@/data/assetLocalData";
+import { CRYPTO } from "@/constants/types";
 
 /**
  * Fetch external API data for the given asset.
@@ -82,22 +14,31 @@ async function processElement(asset: InternalAsset): Promise<{
   type: AssetType;
   amount: number;
   value: number;
-  total: number;
 }> {
-  const url = `${API_LOCAL_BASE_URL}/api/${asset.exchange}/${asset.name}/ARS/1`;
+  const url = (() => {
+    switch (asset.exchange) {
+      case FIWIND:
+      case BUENBIT:
+        return `${API_LOCAL_BASE_URL}/api/${asset.exchange}/${asset.name}/ARS/1`;
+      case BITRUE:
+        return `${API_BITRUE_LOCAL_BASE_URL}/api/v1/ticker/24hr?symbol=${asset.name}USDT`;
+      default: return '';
+    }
+  })();
+        
   try {
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const apiData = await response.json();
-    const bid = apiData.bid || 0;
+    const value = EXCHANGES_FUNCTIONS[asset.exchange as keyof typeof EXCHANGES_FUNCTIONS].getValue(apiData);
+
     return {
       name: asset.name,
       type: asset.type,
       amount: asset.amount,
-      value: bid,
-      total: bid
+      value: value
     };
   } catch (error) {
     console.error(`Error fetching data for ${asset.name}:`, error);
@@ -141,23 +82,29 @@ async function getUsdValue(exchange: keyof typeof USD_API_URLS): Promise<number>
   }
 }
 
+const EXCHANGES_FUNCTIONS = {
+  [FIWIND]: { getUsdValue: () => getUsdValue(FIWIND), getValue: (apiResponse: { bid: number }) => apiResponse.bid },
+  [BUENBIT]: { getUsdValue: () => getUsdValue(BUENBIT), getValue: (apiResponse: { bid: number }) => apiResponse.bid },
+  [BITRUE]: { getUsdValue: () => 1, getValue: (apiResponse: { askPrice: number }[]) => apiResponse[0].askPrice }
+};
+
 export async function localGetAssets(): Promise<Asset[]> {
   // Process crypto assets concurrently
-  const cryptoAssets = mock_assets.filter((asset) => asset.type === "Crypto");
+  const cryptoAssets = mock_assets.filter((asset) => asset.type === CRYPTO);
   const processedPromises = cryptoAssets.map((asset) => processElement(asset));
   const assetExchangeInfoObjs = await Promise.all(processedPromises);
 
   const usdExchangedictionary: { [key: string]: number } = {};
 
-  for (const asset of cryptoAssets) {
-      const usdExchangeRate = await getUsdValue(asset.exchange as "fiwind" | "buenbit");
-      usdExchangedictionary[asset.exchange] = usdExchangeRate;
+  for (const exchange of EXCHANGES) {
+      const usdExchangeRate = await EXCHANGES_FUNCTIONS[exchange as keyof typeof EXCHANGES_FUNCTIONS].getUsdValue();
+      usdExchangedictionary[exchange] = usdExchangeRate;
   }
 
   const assetExchangeInfoRequests: GetAssetExchangeInfoResponse[] = [];
 
   for (const asset of mock_assets) {
-    if (asset.type === "Crypto") {
+    if (asset.type === CRYPTO) {
       const assetExchangeInfo = assetExchangeInfoObjs.find(
         (a) => a.name === asset.name
       );

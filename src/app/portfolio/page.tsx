@@ -1,6 +1,6 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableHead, TableRow, TableBody, TableCell, } from "@/components/ui/table";
-import { assetConversions } from "@/lib/localAssetService";
+import { assetConversions } from "@/data/assetLocalData";
 
 export default function Portfolio()
 {

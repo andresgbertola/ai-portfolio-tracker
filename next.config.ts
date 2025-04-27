@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
         source: "/eapi/:path*",
         destination: "https://criptoya.com/:path*",
       },
+      {
+        source: "/bitrue/:path*",
+        destination: "https://openapi.bitrue.com/:path*",
+      },
     ];
   },
   // add other Next.js config here if needed

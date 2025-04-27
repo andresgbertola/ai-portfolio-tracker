@@ -11,3 +11,5 @@ export const API_URLS = {
 
 // src/constants/api.ts
 export const API_LOCAL_BASE_URL = "eapi";
+
+export const API_BITRUE_LOCAL_BASE_URL = "bitrue";

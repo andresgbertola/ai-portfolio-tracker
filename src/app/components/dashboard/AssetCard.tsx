@@ -16,7 +16,7 @@ export const AssetCard = (asset: Asset) => {
 
         {/* Amount (Right) */}
         <p className="text-xl font-semibold">
-        {asset.amount.toFixed(4)}
+        {asset.amount?.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
         </p>
     </div>
     </CardHeader>
@@ -30,7 +30,7 @@ export const AssetCard = (asset: Asset) => {
               Current Value
             </p>
             <p className="text-lg font-bold">
-              ${asset.fiatValue?.toFixed(4)}
+              ${asset.fiatValue?.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
             </p>
           </div>
           <div>
@@ -38,33 +38,32 @@ export const AssetCard = (asset: Asset) => {
               Total
             </p>
             <p className="text-md font-bold">
-              ${asset.totalFiatValue?.toFixed(2)} USD
+              ${asset.totalFiatValue?.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
             </p>
           </div>
         </div>
 
         {/* Profit/Loss Section */}
         {asset.type === 'Crypto' && asset.profitPercentage !== undefined && (
-            <div>            <p className="text-sm font-medium text-muted-foreground">
-            Rendimientos
-        </p>
-          <div className="grid grid-cols-2 gap-4">
-            {/* Percentage */}
-            <div className="flex items-center space-x-2">
-              {/* Optional arrow icons for up/down */}
-              {isProfit ? (
-                <ArrowUpIcon className="h-4 w-4 text-green-600" />
-              ) : (
-                <ArrowDownIcon className="h-4 w-4 text-rose-600" />
-              )}
-              <p
-                className={`text-sm font-medium ${
-                  isProfit ? "text-green-800" : "text-rose-800"
-                }`}
-              >
-                {asset.profitPercentage.toFixed(2)}%
-              </p>
-            </div>
+            <div>            
+              <p className="text-sm font-medium text-muted-foreground">Profits</p>
+              <div className="grid grid-cols-2 gap-4">
+              {/* Percentage */}
+              <div className="flex items-center space-x-2">
+                {/* Optional arrow icons for up/down */}
+                {isProfit ? (
+                  <ArrowUpIcon className="h-4 w-4 text-green-600" />
+                ) : (
+                  <ArrowDownIcon className="h-4 w-4 text-rose-600" />
+                )}
+                <p
+                  className={`text-sm font-medium ${
+                    isProfit ? "text-green-800" : "text-rose-800"
+                  }`}
+                >
+                  {asset.profitPercentage.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
+                </p>
+              </div>
 
             {/* Profit Fiat Value */}
             <div className="flex items-center space-x-2">
@@ -73,7 +72,7 @@ export const AssetCard = (asset: Asset) => {
                   isProfit ? "text-green-800" : "text-rose-800"
                 }`}
               >
-                ${asset.profitFiatValue?.toFixed(2)} USD
+                ${asset.profitFiatValue?.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
           </div>
