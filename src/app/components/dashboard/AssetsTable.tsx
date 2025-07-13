@@ -33,7 +33,6 @@ const AssetsTable = ({ assets }: { assets: Asset[] }) => {
                 {
                     (assets.length > 0 ?
                         ([...assets]
-                            .sort((a, b) => b.totalFiatValue - a.totalFiatValue)
                             .map((asset) => (
                                 <TableRow key={asset.name}>
                                     <TableCell className="font-bold">{asset.name}</TableCell>

@@ -11,7 +11,7 @@ export const useAssets = (useLocal: boolean) => {
         const fetchAssets = async () => {
             const fetchFunc = useLocal ? localGetAssets() : getAssests();
             const data = await fetchFunc;
-            setAssets(data);
+            setAssets(data.sort((a, b) => b.totalFiatValue - a.totalFiatValue));
             setLoading(false);
         };
         fetchAssets();

@@ -17,6 +17,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import { Asset } from "@/app/types/Asset"
+import { CRYPTO } from '@/constants/types';
 
 const colors = ['#2662d9','#e23670','#ffa245','#2eb88a','#af57db']
 
@@ -35,7 +36,9 @@ const generateColor = (index: number, total: number) => {
 export const AssetsPieChart = ({ assets }: { assets: Asset[] }) => 
 {
     // Include a "fill" property for each data item.
-    const chartData = assets.map((asset, index) => ({
+    const chartData = assets
+        .sort((a, b) => b.totalFiatValue - a.totalFiatValue)
+        .map((asset, index) => ({
         assetName: asset.name,
         total: asset.totalFiatValue,
         fill: generateColor(index, assets.length),
@@ -43,7 +46,15 @@ export const AssetsPieChart = ({ assets }: { assets: Asset[] }) =>
 
     const totalValue = assets.reduce((sum, asset) => sum + asset.totalFiatValue, 0);
 
-    const totalProfitValue = assets.reduce((sum, asset) => sum + asset.profitFiatValue, 0);
+    const totalCryptoValue = assets
+        .filter(asset => asset.type === CRYPTO)
+        .reduce((sum, asset) => sum + asset.avgBoughtFiatValue * asset.amount, 0);
+
+    const totalCryptoProfitValue = assets
+        .filter(asset => asset.type === CRYPTO)
+        .reduce((sum, asset) => sum + asset.profitFiatValue, 0);
+
+    const totalCryptoProfitPercentage = ((totalCryptoValue + totalCryptoProfitValue) * 100 / totalCryptoValue) - 100;
 
     // Define ChartConfig dynamically following the expected type.
     // The key names here should match the asset names (or a unique identifier)
@@ -112,8 +123,14 @@ export const AssetsPieChart = ({ assets }: { assets: Asset[] }) =>
             </ChartContainer>
         </CardContent>
         <CardFooter className="flex-col gap-2 text-sm">
-            <div className={`flex items-center gap-2 text-lg font-bold leading-none ${totalProfitValue > 0 ? 'text-green-800' : 'text-rose-800'}`}>
-                {Math.round(totalProfitValue).toLocaleString()} USD {totalProfitValue > 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+            <div className={`flex items-center gap-2 text-lg font-bold leading-none ${totalCryptoProfitValue > 0 ? 'text-green-800' : 'text-rose-800'}`}>
+                {Math.round(totalCryptoProfitValue).toLocaleString()} USD {totalCryptoProfitValue > 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+            </div>
+            <div className={`flex items-center gap-2 text-lg font-bold leading-none ${totalCryptoProfitValue > 0 ? 'text-green-800' : 'text-rose-800'}`}>
+                {Math.round(totalCryptoProfitPercentage).toLocaleString()} % {totalCryptoProfitValue > 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+            </div>
+            <div className="flex items-center gap-2 text-sm font-bold leading-none text-gray">
+                From total invested: {Math.round(totalCryptoValue).toLocaleString()} USD
             </div>
         </CardFooter>
     </Card>
